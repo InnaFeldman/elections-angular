@@ -23,7 +23,7 @@ export class AppComponent implements OnInit{
   loadedCharacter: {};
 
   chartDatasets = [
-    {data: [], label: 0}
+    {data: [], label: ''}
   ];
 
 
@@ -65,57 +65,22 @@ export class AppComponent implements OnInit{
 
   results: PartyResult[] = [];
 
-  constructor(private http: HttpClient, private ref: ChangeDetectorRef){};
+  constructor(private http: HttpClient, private apiService: ApiService){};
 
 
 
   ngOnInit(): void {
 
     this.elections.map(election => {
-      this.http.get(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${election.number}/allResults.json`).subscribe((result: any) => {
-        let objLength = Object.keys(result.realResults).length;
-        election.numberOfPartiesThatPassedAhuzHasima = objLength;
-        this.chartDatasets = [{data: [...this.chartDatasets[0].data, election.numberOfPartiesThatPassedAhuzHasima], label: 2}];
-        // this.chartDatasets.push({data: [election.numberOfPartiesThatPassedAhuzHasima], label: result.time});
-        this.chartLabels.push(result.time);
-      },
-      err => console.log('Error loading a data'),
-      () => console.log('All requests have finished')
+      this.apiService.getPartiCountByElectionNumber_2(election.number).then((partiesNumber: number) => {
+          election.numberOfPartiesThatPassedAhuzHasima = partiesNumber;
+          this.chartDatasets = [{data: [...this.chartDatasets[0].data, election.numberOfPartiesThatPassedAhuzHasima], label: "Parties"}];
+          let year = election.date.getFullYear();
+          this.chartLabels.push(year);
+      }
       )
     })
-
-
-
-
-
-    // from(this.elections).pipe(
-    //   mergeMap(num => this.http.get(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${num.number}/allResults.json`)),
-    //   takeUntil(this.endSubs$)
-    // ).subscribe(
-    //   (result: any) => {
-    //     if(result) {
-    //       let objLength = Object.keys(result.realResults).length;
-    //       this.elections.map(e => {
-    //         e.numberOfPartiesThatPassedAhuzHasima = objLength;
-    //       })
-    //     }
-    //   },
-    //   err => console.log('Error loading a data'),
-    //   () => console.log('All requests have finished')
-    // )
-
-    // console.log(this.elections)
-    // //console.log(this.chartDatasets)
   }
-
-  // setChartData(){}
-
-  // ngOnDestory() {
-  //   this.endSubs$.next();
-  //   this.endSubs$.complete();
-  // }
-
-
 }
 
 

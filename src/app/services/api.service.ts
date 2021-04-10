@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { ApiResponse } from '../interfaces/apiResponse';
 
 
 @Injectable({
@@ -11,12 +13,26 @@ export class ApiService {
 
   constructor(private http: HttpClient) { }
 
-  getData(): Observable<any> {
-    let election_22 = this.http.get('https://israel-elections-1.s3.eu-west-3.amazonaws.com/22/allResults.json');
-    let election_23 = this.http.get('https://israel-elections-1.s3.eu-west-3.amazonaws.com/23/allResults.json');
-    let election_24 = this.http.get('https://israel-elections-1.s3.eu-west-3.amazonaws.com/24/allResults.json');
+  getPartiCountByElectionNumber(numOfElection: number): Observable<number> {
+    return this.http.get<ApiResponse>(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${numOfElection}/allResults.json`)
+      .pipe(
+        map(res => Object.keys(res.realResults).length),
+        catchError(error => { /// Skips sending error to base component
+          console.log(error);
+          return of(0);
+        })
+      )
+  }
 
-    return forkJoin([election_22, election_23, election_24]);
+  getPartiCountByElectionNumber_2(numOfElection: number): Promise<any> {
+    const result = new Promise(resolve => {
+      this.http.get<ApiResponse>(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${numOfElection}/allResults.json`)
+        .subscribe(response => {
+          resolve(Object.keys(response.realResults).length)
+        })
+    })
+
+    return result;
   }
 
 
