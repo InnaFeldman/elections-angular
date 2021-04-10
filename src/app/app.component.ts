@@ -1,9 +1,13 @@
-import { OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
 import { Component } from '@angular/core';
 import {Election} from './interfaces/election';
 import { Party } from './interfaces/party';
 import { PartyResult } from './interfaces/partyResult';
 import { ApiService } from './services/api.service';
+import {HttpClient} from '@angular/common/http';
+import { forkJoin, from , Observable} from 'rxjs';
+import { Subject } from 'rxjs';
+import { mergeMap, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -11,13 +15,15 @@ import { ApiService } from './services/api.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit{
-  error: boolean = false;
+  // error: boolean = false;
 
-  putDataInChart: boolean = false;
-  loading: boolean = true;
+  // putDataInChart: boolean = false;
+  // loading: boolean = true;
+  endSubs$ = new Subject();
+  loadedCharacter: {};
 
   chartDatasets = [
-    { data: [], label: 'Elections' }
+    {data: [], label: 0}
   ];
 
 
@@ -40,99 +46,76 @@ export class AppComponent implements OnInit{
   ];
 
   chartOptions: any = {
-    responsive: true
+    responsive: true,
+    scales: {
+      yAxes: [{
+        ticks: {
+          beginAtZero: true
+        }
+      }]
+    }
   };
 
 
   elections: Election[] = [
-    {date: new Date(2019, 8, 17), number: 22, ahuzHasima: 3.25, partyResults: [], numberOfPartiesThatPassedAhuzHasima: 0, loadingAPICall: true},
-    {date: new Date(2020, 2, 2), number: 23, ahuzHasima: 3.25, partyResults: [], numberOfPartiesThatPassedAhuzHasima: 0, loadingAPICall: true},
-    {date: new Date(2021, 2, 23), number: 24, ahuzHasima: 3.25, partyResults: [], numberOfPartiesThatPassedAhuzHasima: 0, loadingAPICall: true},
+    {date: new Date(2019, 8, 17), number: 22, ahuzHasima: 3.25, partyResults: [], numberOfPartiesThatPassedAhuzHasima: 0},
+    {date: new Date(2020, 2, 2), number: 23, ahuzHasima: 3.25, partyResults: [], numberOfPartiesThatPassedAhuzHasima: 0},
+    {date: new Date(2021, 2, 23), number: 24, ahuzHasima: 3.25, partyResults: [], numberOfPartiesThatPassedAhuzHasima: 0},
   ];
-
-  // parties: Party[] = [
-  //   {"symbol":"ודעם"},
-  //   {"symbol":"כן"},
-  //   {"symbol":"עם"},
-  //   {"symbol":"שס"},
-  //   {"symbol":"ג"},
-  //   {"symbol":"מחל"},
-  //   {"symbol":"ט"},
-  //   {"symbol":"מרצ"},
-  //   {"symbol":"אמת"},
-  //   {"symbol":"ת"},
-  //   {"symbol":"ב"},
-  //   {"symbol":"ל"},
-  //   {"symbol":"פה"}
-  // ];
 
   results: PartyResult[] = [];
 
-  constructor(public apiService: ApiService){
-
-  };
+  constructor(private http: HttpClient, private ref: ChangeDetectorRef){};
 
 
 
   ngOnInit(): void {
-    //we start by looping through our elections
-    //for each election we use our api service to get the api result. we use the number to get the url using
-    //the helping function we built (getURLByElection)
+
     this.elections.map(election => {
-      this.apiService.fetchPartyResult(election.number)
-      .subscribe(
-        //subscribe first callback is if the api call has succeeded !!
-        //first we set the loading to false, since we got a result
-        // we are checking that the returned object has an object called 'real results' in it
-        //if it does not - error is true!
-        (x:any) => {
-          election.loadingAPICall = false;
-          if(x.realResults){
-            //if we have real results - we need the number of parties in this object
-            //because this api only returns the number of parties that passed ahuz hasima!
-            //we use object.keys to get the array ready for length
-            election.numberOfPartiesThatPassedAhuzHasima = Object.keys(x.realResults).length;
-          }
-          else{
-            this.error = true;
-          }
-          this.checkIfComplete()
+      this.http.get(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${election.number}/allResults.json`).subscribe((result: any) => {
+        let objLength = Object.keys(result.realResults).length;
+        election.numberOfPartiesThatPassedAhuzHasima = objLength;
+        this.chartDatasets = [{data: [...this.chartDatasets[0].data, election.numberOfPartiesThatPassedAhuzHasima], label: 2}];
+        // this.chartDatasets.push({data: [election.numberOfPartiesThatPassedAhuzHasima], label: result.time});
+        this.chartLabels.push(result.time);
       },
-      err => {
-        //this happens when api returns error like if the url is wrong!!
-        this.error = true;
-        election.loadingAPICall = false;
-      })
+      err => console.log('Error loading a data'),
+      () => console.log('All requests have finished')
+      )
     })
 
 
+
+
+
+    // from(this.elections).pipe(
+    //   mergeMap(num => this.http.get(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${num.number}/allResults.json`)),
+    //   takeUntil(this.endSubs$)
+    // ).subscribe(
+    //   (result: any) => {
+    //     if(result) {
+    //       let objLength = Object.keys(result.realResults).length;
+    //       this.elections.map(e => {
+    //         e.numberOfPartiesThatPassedAhuzHasima = objLength;
+    //       })
+    //     }
+    //   },
+    //   err => console.log('Error loading a data'),
+    //   () => console.log('All requests have finished')
+    // )
+
+    // console.log(this.elections)
+    // //console.log(this.chartDatasets)
   }
 
-  //we are checking if we are loading any data, if so - show spinner!
-  checkIfComplete(){
-    //Filter all elections to only show ones still loading and count how many there are.
-    let numberOfElectionsLoading = this.elections.filter(x => {return x.loadingAPICall}).length
-    //Number of elections that still need to load data from API = numberOfElectionsLoading!
-    if(numberOfElectionsLoading > 0 && !this.error && !this.putDataInChart){
-      this.setChartData()
-    }
-    this.loading =  numberOfElectionsLoading > 0;
-  }
+  // setChartData(){}
 
-
-  setChartData(){
-   this.elections.map((election) => {
-    //  this.chartLabels.push(elections.number)
-     console.log(election.numberOfPartiesThatPassedAhuzHasima)
-    //  this.chartDatasets[0].data.push(elections.numberOfPartiesThatPassedAhuzHasima);
-   })
-
-    console.log(this.chartDatasets);
-
-    this.putDataInChart = true;
-  }
-
-
+  // ngOnDestory() {
+  //   this.endSubs$.next();
+  //   this.endSubs$.complete();
+  // }
 
 
 }
+
+

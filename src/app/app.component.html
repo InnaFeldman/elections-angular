@@ -1,4 +1,4 @@
-<div *ngIf="loading">
+<!-- <div *ngIf="loading">
   <div class="spinner-border" role="status">
     <span class="sr-only">Loading...</span>
   </div>
@@ -7,6 +7,18 @@
 
 
 <div *ngIf="!loading && !error">
+  <div style="display: block">
+    <canvas mdbChart
+        [chartType]="'bar'"
+        [datasets]="chartDatasets"
+        [labels]="chartLabels"
+        [colors]="chartColors"
+        [options]="chartOptions"
+        [legend]="true">
+    </canvas>
+  </div>
+</div> -->
+<div class="container">
   <div style="display: block">
     <canvas mdbChart
         [chartType]="'bar'"

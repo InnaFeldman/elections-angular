@@ -5,6 +5,5 @@ export interface Election {
   number: number,
   ahuzHasima: number,
   partyResults?: PartyResult[],
-  numberOfPartiesThatPassedAhuzHasima?: number,
-  loadingAPICall: boolean
+  numberOfPartiesThatPassedAhuzHasima?: number
 }

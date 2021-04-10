@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import {HttpClient} from '@angular/common/http'
-import { Election } from '../interfaces/election';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
 
 
 @Injectable({
@@ -11,14 +11,12 @@ export class ApiService {
 
   constructor(private http: HttpClient) { }
 
-  //We are getting the api data, we are returning an observable
-  fetchPartyResult(electionID){
-    return this.http.get<any[]>(this.getURLByElection(electionID))
-  }
+  getData(): Observable<any> {
+    let election_22 = this.http.get('https://israel-elections-1.s3.eu-west-3.amazonaws.com/22/allResults.json');
+    let election_23 = this.http.get('https://israel-elections-1.s3.eu-west-3.amazonaws.com/23/allResults.json');
+    let election_24 = this.http.get('https://israel-elections-1.s3.eu-west-3.amazonaws.com/24/allResults.json');
 
-  //here are we need to put election number so we have the URL to fetch!
-  getURLByElection(electionID){
-    return `https://israel-elections-1.s3.eu-west-3.amazonaws.com/${electionID}/allResults.json`
+    return forkJoin([election_22, election_23, election_24]);
   }
 
 
