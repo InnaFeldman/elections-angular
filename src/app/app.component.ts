@@ -10,6 +10,8 @@ import { ApiService } from './services/api.service';
 })
 export class AppComponent implements OnInit{
 
+  loading: boolean = true;
+
   chartDatasets = [
     {data: [], label: ''}
   ];
@@ -20,14 +22,14 @@ export class AppComponent implements OnInit{
   chartColors: any[] = [
     {
       backgroundColor: [
-        'rgba(255, 99, 132, 1)',
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)'
+        '#008080',
+        '#008080',
+        '#008080'
       ],
       borderColor: [
-        'rgba(255,99,132,1)',
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)',
+        '#008080',
+        '#008080',
+        '#008080',
       ],
       borderWidth: 2,
     }
@@ -62,6 +64,7 @@ export class AppComponent implements OnInit{
           this.chartDatasets = [{data: [...this.chartDatasets[0].data, election.numberOfPartiesThatPassedAhuzHasima], label: "Parties"}];
           let year = election.date.getFullYear();
           this.chartLabels.push(year);
+          this.loading = false;
       }
       )
     })
