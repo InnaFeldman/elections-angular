@@ -23,17 +23,4 @@ export class ApiService {
         })
       )
   }
-
-  getPartiCountByElectionNumber_2(numOfElection: number): Promise<any> {
-    const result = new Promise(resolve => {
-      this.http.get<ApiResponse>(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${numOfElection}/allResults.json`)
-        .subscribe(response => {
-          resolve(Object.keys(response.realResults).length)
-        })
-    })
-
-    return result;
-  }
-
-
 }
