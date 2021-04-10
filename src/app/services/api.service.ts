@@ -17,7 +17,7 @@ export class ApiService {
     return this.http.get<ApiResponse>(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${numOfElection}/allResults.json`)
       .pipe(
         map(res => Object.keys(res.realResults).length),
-        catchError(error => { /// Skips sending error to base component
+        catchError(error => {
           console.log(error);
           return of(0);
         })
