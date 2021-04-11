@@ -6,7 +6,7 @@
     </div>
   </div>
 
-<div class="container">
+<div *ngIf="!loading" class="wrapper">
   <div style="display: block">
     <canvas mdbChart
         [chartType]="'bar'"
@@ -17,4 +17,5 @@
         [legend]="true">
     </canvas>
   </div>
+</div>
 </div>
